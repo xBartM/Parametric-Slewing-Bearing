@@ -1,8 +1,12 @@
 import cadquery as cq
 
 class SlewBearing:
-    def __init__(self, inner_diameter, outer_diameter, pitch_diameter, width, roller_diameter, roller_fit, roller_slide, num_rollers):
-        
+    def __init__(self, inner_diameter, outer_diameter, width, roller_diameter, roller_fit, roller_slide, num_rollers):
+        # Layer adhesion is probably a limiting factor for the strength of the bearing
+        # Points of failure are probably at 1/2 of width where there are the least amount of material
+        # To ensure as even load distribution at 1/2 of width the area of an inner ring should be equal to the area of the outer ring
+        # This way we eliminate the need to choose the pitch_diameter by ourselves
+
         # Constraints
         ## 3d printer
         line_thickness = 0.4
@@ -14,14 +18,22 @@ class SlewBearing:
         
         # Consistency check
         ## positive values
-        if any(map(lambda x: x < 0.0, (inner_diameter, outer_diameter, pitch_diameter, width, roller_diameter, roller_fit, roller_slide, num_rollers))):
-            raise ValueError('Value can\'t be less than 0.0')
+        if any(map(lambda x: x < 0.0, (inner_diameter, outer_diameter, width, roller_diameter, roller_fit, roller_slide, num_rollers))):
+            raise ValueError('Value can\'t be less than 0.0.')
+
+        ## pitch_diameter real and more than 0.0
+        if outer_diameter**2.0 + inner_diameter**2.0 - (roller_diameter + roller_fit)**2.0 <= 0.0:
+            raise ValueError('Pitch diameter not real.')
+
+        pitch_diameter = (sqrt(2.0)/2.0)*sqrt(outer_diameter**2.0 + inner_diameter**2.0 - (roller_diameter + roller_fit)**2.0)
+
         ## inner race as single piece
         if pitch_diameter - inner_diameter - (roller_diameter + roller_fit) * sqrt(2.0)/2.0 < inner_race_min_thickness:
             raise ValueError('Inner race min thickness too low. Consider decreasing inner diameter, increasing pitch diameter or decreasing roller diameter+roller fit.')
         ## outer race as single piece
         if outer_diameter - pitch_diameter - (roller_diameter + roller_fit) * sqrt(2.0)/2.0 < outer_race_min_thickness:
             raise ValueError('Outer race min thickness too low. Consider decreasing pitch diameter, increasing outer diameter or decreasing roller diameter+roller fit.')
+
         ## roller chamfer length
         if roller_diameter*sqrt(2.0) + roller_fit*sqrt(2.0)/2.0 - roller_slide*sqrt(2.0)/2.0 - width < roller_chamfer_min_length:
             raise ValueError('Roller chamfer too small. Consider increasing roller diameter + roller fit, decreasing roller slide, decreasing bearing width')
@@ -166,7 +178,6 @@ def sqrt(num):
 my_bearing = SlewBearing(
     inner_diameter=234,
     outer_diameter=403.5,
-    pitch_diameter=307,
     width=45,
     roller_diameter=38.9,
     roller_fit=1.1,
