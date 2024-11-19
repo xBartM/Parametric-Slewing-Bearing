@@ -62,26 +62,12 @@ class SlewBearing:
         self.roller_fit = roller_fit # tolerances between races and rolling part of a roller
         self.roller_length = roller_diameter + roller_fit - roller_slide # length of a roller
         self.roller_slide = roller_slide # tolerances between races and sliding part of a roller
-        self.num_rollers = num_rollers 
+        self.num_rollers = num_rollers # number of the rollers - it needs to be divisible by two
         
         ## model parts
-        self.assy = cq.Assembly()
-        self.model = self.makeRacesOG()
         self.races = self.makeRaces()
         self.roller = self.makeRoller()
-        
-
-    def make(self):
-        # Create the rollers
-        roller = cq.Workplane('XY').circle(self.roller_diameter / 2).extrude(self.roller_length)
-        rollers = []
-        for i in range(self.num_rollers):
-            angle = 360 / self.num_rollers * i
-            roller_instance = roller.rotate((0, 0, 0), (0, 0, 1), angle).translate((0, (self.outer_diameter + self.inner_diameter) / 4, 0))
-            rollers.append(roller_instance)
-
-
-        return bearing
+        self.assy = self.makeBearingAssembly()
 
 
     def makeRaces(self):
@@ -123,8 +109,9 @@ class SlewBearing:
         )
         return roller
     
-    def makeBearing(self):
-        self.assy.add(
+    def makeBearingAssembly(self):
+        assy = cq.Assembly()
+        assy.add(
             self.races,
             name="races",
             color=cq.Color("gold")
@@ -137,7 +124,7 @@ class SlewBearing:
                 roller_rotate_deg = -45.0
                 roller_colour = "tan"
 
-            self.assy.add(
+            assy.add(
                 self.roller
                 # rotate roller
                 .rotate(axisStartPoint=(0.0, 0.0, 0.0),
@@ -152,44 +139,7 @@ class SlewBearing:
                 name="roller" + str(i),
                 color=cq.Color(roller_colour)
                 )
-
-        return self.assy
-
-    def makeRacesOG(self):
-        side_section = (
-            cq.Workplane("YZ")
-            .transformed(offset=(-self.outer_diameter, 0.0, 0.0))
-            # outer and inner races combined (cut later)
-            .rect(self.outer_diameter-self.inner_diameter, self.width, centered=False)
-            .revolve(axisStart=(self.outer_diameter, 0.0, 0.0),
-                     axisEnd=  (self.outer_diameter, 1.0, 0.0))
-            # move to the center of rollers
-            .center(self.outer_diameter-self.pitch_diameter,
-                    self.width/2.0)
-            # cut bearing surfaces
-            .polyline([(-((self.roller_diameter+self.roller_fit)*sqrt(2.0))/2.0, 0.0),
-                       (0.0, ((self.roller_diameter+self.roller_fit)*sqrt(2.0))/2.0),
-                       (((self.roller_diameter+self.roller_fit)*sqrt(2.0))/2.0, 0.0),
-                       (0.0, -((self.roller_diameter+self.roller_fit)*sqrt(2.0))/2.0)
-                       ]).close()
-            .revolve(axisStart=(self.pitch_diameter, 0.0, 0.0),
-                     axisEnd=  (self.pitch_diameter, 1.0, 0.0),
-                     combine='cut')
-            #add a roller
-            .transformed(rotate=(0.0, 0.0, -45.0))
-            .polyline([(0.0, -self.roller_length/2.0),
-                       ((self.width*sqrt(2.0)-self.roller_length)/2.0, -self.roller_length/2.0),
-                       (self.roller_diameter/2.0, -(self.width*sqrt(2.0)-self.roller_diameter)/2.0),
-                       #(self.roller_diameter/2.0, 0.0)
-                       (self.roller_diameter/2.0, (self.width*sqrt(2.0)-self.roller_diameter)/2.0),
-                       ((self.width*sqrt(2.0)-self.roller_length)/2.0, self.roller_length/2.0),
-                       (0.0, self.roller_length/2.0)
-                       ]).close()
-            .revolve(axisStart=(0.0, 0.0, 0.0),
-                     axisEnd=  (0.0, 1.0, 0.0))
-
-        )
-        return side_section
+        return assy
 
 
 # Create an instance of the SlewBearing
@@ -204,11 +154,5 @@ my_bearing = SlewBearing(
     num_rollers=52
 )
 
-#bearing_geometry = my_bearing.model
-bearing_geometry = my_bearing.makeBearing()
-
-# Generate the bearing geometry
-#bearing_geometry = my_bearing.make()
-
-# Display the bearing (assuming you have a display function available)
-show_object(bearing_geometry)
+# Display the bearing
+show_object(my_bearing.assy)
