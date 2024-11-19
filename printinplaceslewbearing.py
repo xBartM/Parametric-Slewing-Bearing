@@ -29,8 +29,9 @@ class SlewBearing:
         if num_rollers % 2 == 1:
             raise ValueError('The number of rollers must be divisible by 2.')
 
-        roller_theta = pi/num_rollers # 360.0 / (num_rollers*2) to get an angle that a single roller occupies
-        roller_diameter = sqrt(2.0)*sqrt((outer_diameter*outer_diameter + inner_diameter*inner_diameter)/(tan(roller_theta)**(-2.0)+4.0)) - roller_fit
+        roller_theta_rad = pi/num_rollers # 360.0 / (num_rollers*2) to get an angle that a single roller occupies
+        roller_theta_deg = 360.0 / (num_rollers*2.0) # for use later
+        roller_diameter = sqrt(2.0)*sqrt((outer_diameter*outer_diameter + inner_diameter*inner_diameter)/(tan(roller_theta_rad)**(-2.0)+4.0)) - roller_fit
 
         ## pitch_diameter real and more than 0.0
         if outer_diameter**2.0 + inner_diameter**2.0 - (roller_diameter + roller_fit)**2.0 <= 0.0:
@@ -56,7 +57,7 @@ class SlewBearing:
         self.pitch_diameter = pitch_diameter # diameter of the circle that that the rollers follow during rotation of a bearing
         self.width = width # bearing width
         ## Rollers
-        self.roller_theta = roller_theta # an angle from the middle of the roller to it's tangent neighbour
+        self.roller_theta = roller_theta_deg # an angle from the middle of the roller to it's tangent neighbour
         self.roller_diameter = roller_diameter # diameter of a roller
         self.roller_fit = roller_fit # tolerances between races and rolling part of a roller
         self.roller_length = roller_diameter + roller_fit - roller_slide # length of a roller
@@ -128,22 +129,30 @@ class SlewBearing:
             name="races",
             color=cq.Color("gold")
             )
-        # for
-        self.assy.add(
-            self.roller
-            # rotate roller
-            .rotate(axisStartPoint=(0.0, 0.0, 0.0),
-                    axisEndPoint=(1.0, 0.0, 0.0),
-                    angleDegrees=45.0)
-            # move to base position
-            .translate(vec=(-100.0, 0.0, 0.0))
-            # rotate to final position
-            .rotate(axisStartPoint=(0.0, 0.0, 0.0),
-                    axisEndPoint=(0.0, 0.0, 1.0),
-                    angleDegrees=45.0),
-            name="roller0",
-            color=cq.Color("tan1") # tan3 for other way
-            )
+        for i in range(self.num_rollers):
+            if i % 2 == 0:
+                roller_rotate_deg = 45.0
+                roller_colour = "tan1"
+            else:
+                roller_rotate_deg = -45.0
+                roller_colour = "tan"
+
+            self.assy.add(
+                self.roller
+                # rotate roller
+                .rotate(axisStartPoint=(0.0, 0.0, 0.0),
+                        axisEndPoint=(1.0, 0.0, 0.0),
+                        angleDegrees=roller_rotate_deg)
+                # move to base position
+                .translate(vec=(0.0, -self.pitch_diameter, self.width/2.0))
+                # rotate to final position
+                .rotate(axisStartPoint=(0.0, 0.0, 0.0),
+                        axisEndPoint=(0.0, 0.0, 1.0),
+                        angleDegrees=i*self.roller_theta*2.0),
+                name="roller" + str(i),
+                color=cq.Color(roller_colour)
+                )
+
         return self.assy
 
     def makeRacesOG(self):
@@ -192,7 +201,7 @@ my_bearing = SlewBearing(
 #    roller_diameter=38.9,
     roller_fit=1.1,
     roller_slide=1.5,
-    num_rollers=52.0
+    num_rollers=52
 )
 
 #bearing_geometry = my_bearing.model
