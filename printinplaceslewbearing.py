@@ -154,5 +154,27 @@ my_bearing = SlewBearing(
     num_rollers=52
 )
 
+my_bearing.assy.toCompound().exportStl("models/bearing_test.stl")
+
+ID = 25.0
+OD = 50.0
+W  = 10.0
+RF = 0.3
+RS = 0.9
+NR = 2
+while True:
+    try:
+        SlewBearing(ID, OD, W, RF, RS, NR)
+        break
+    except ValueError:
+        NR += 2
+while True:
+    try:
+        SlewBearing(ID, OD, W, RF, RS, NR).assy.toCompound().exportStl("models/b" + str(OD) + "x" + str(ID) + "x" + str(W) + "_" + str(RF) + "x" + str(RS) + "_" + str(NR) + ".stl")
+        NR += 2
+    except ValueError:
+        break
+    
+
 # Display the bearing
 show_object(my_bearing.assy)
