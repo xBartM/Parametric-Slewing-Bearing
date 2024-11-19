@@ -2,14 +2,14 @@ import cadquery as cq
 from math import sqrt, tan, pi
 
 class SlewBearing:
-    def __init__(self, inner_diameter, outer_diameter, width, roller_fit, roller_slide, num_rollers):
+    def __init__(self, outer_diameter, inner_diameter, width, roller_fit, roller_slide, num_rollers):
         # Layer adhesion is probably a limiting factor for the strength of the bearing
         # Points of failure are probably at 1/2 of width where there is the least amount of material
         # To ensure even load distribution at 1/2 of width, the area of an inner ring should be equal to the area of the outer ring
-        # This way we eliminate the need to choose the pitch_diameter by ourselves
+        # This way we eliminate the need to choose the pitch_radius by ourselves
 
         # Since the bearing will be 3D printed, roller_diameter can be arbitrary
-        # Roller_diameter depends on pitch_diameter and num_rollers
+        # Roller_diameter depends on pitch_radius and num_rollers
         # In order to reduce the number of less important variables, roller_diameter is calculated
 
         # Constraints
@@ -20,10 +20,12 @@ class SlewBearing:
         inner_race_min_thickness = line_thickness * 3 # minimal number of walls for the inner race
         outer_race_min_thickness = line_thickness * 3 # minimal number of walls for the outer race
         roller_chamfer_min_length = line_thickness * 3 # minimal number of lines touching the print bed
-        
+        outer_radius = outer_diameter/2.0 # it's more natural to provide ID and OD than using radii
+        inner_radius = inner_diameter/2.0
+
         # Consistency check
         ## positive values
-        if any(map(lambda x: x < 0.0, (inner_diameter, outer_diameter, width, roller_fit, roller_slide, num_rollers))):
+        if any(map(lambda x: x < 0.0, (inner_radius, outer_radius, width, roller_fit, roller_slide, num_rollers))):
             raise ValueError('Value can\'t be less than 0.0.')
 
         if num_rollers % 2 == 1:
@@ -31,19 +33,19 @@ class SlewBearing:
 
         roller_theta_rad = pi/num_rollers # 360.0 / (num_rollers*2) to get an angle that a single roller occupies
         roller_theta_deg = 360.0 / (num_rollers*2.0) # for use later
-        roller_diameter = sqrt(2.0)*sqrt((outer_diameter*outer_diameter + inner_diameter*inner_diameter)/(tan(roller_theta_rad)**(-2.0)+4.0)) - roller_fit
+        roller_diameter = sqrt(2.0)*sqrt((outer_radius*outer_radius + inner_radius*inner_radius)/(tan(roller_theta_rad)**(-2.0)+4.0)) - roller_fit
 
-        ## pitch_diameter real and more than 0.0
-        if outer_diameter**2.0 + inner_diameter**2.0 - (roller_diameter + roller_fit)**2.0 <= 0.0:
-            raise ValueError('Pitch diameter not real.')
+        ## pitch_radius real and more than 0.0
+        if outer_radius**2.0 + inner_radius**2.0 - (roller_diameter + roller_fit)**2.0 <= 0.0:
+            raise ValueError('Pitch radius not real.')
 
-        pitch_diameter = (sqrt(2.0)/2.0)*sqrt(outer_diameter**2.0 + inner_diameter**2.0 - (roller_diameter + roller_fit)**2.0)
+        pitch_radius = (sqrt(2.0)/2.0)*sqrt(outer_radius**2.0 + inner_radius**2.0 - (roller_diameter + roller_fit)**2.0)
 
         ## inner race as single piece
-        if pitch_diameter - inner_diameter - (roller_diameter + roller_fit) * sqrt(2.0)/2.0 < inner_race_min_thickness:
+        if pitch_radius - inner_radius - (roller_diameter + roller_fit) * sqrt(2.0)/2.0 < inner_race_min_thickness:
             raise ValueError('Inner race min thickness too low. Consider decreasing inner diameter, increasing outer diameter, decreasing roller fit or increasing the number of rollers.')
         ## outer race as single piece
-        if outer_diameter - pitch_diameter - (roller_diameter + roller_fit) * sqrt(2.0)/2.0 < outer_race_min_thickness:
+        if outer_radius - pitch_radius - (roller_diameter + roller_fit) * sqrt(2.0)/2.0 < outer_race_min_thickness:
             raise ValueError('Outer race min thickness too low. Consider increasing outer diameter, decreasing inner diameter, decreasing roller fit or increasing the number of rollers.')
 
         ## roller chamfer length
@@ -52,9 +54,9 @@ class SlewBearing:
 
         # Parameters
         ## Races
-        self.inner_diameter = inner_diameter # bore / ID of the bearing
-        self.outer_diameter = outer_diameter # OD of the bearing
-        self.pitch_diameter = pitch_diameter # diameter of the circle that that the rollers follow during rotation of a bearing
+        self.inner_radius = inner_radius # ID/2.0 of the bearing
+        self.outer_radius = outer_radius # OD/2.0 of the bearing
+        self.pitch_radius = pitch_radius # radius of the circle that that the rollers follow during rotation of a bearing
         self.width = width # bearing width
         ## Rollers
         self.roller_theta = roller_theta_deg # an angle from the middle of the roller to it's tangent neighbour
@@ -73,13 +75,13 @@ class SlewBearing:
     def makeRaces(self):
         races = (
             cq.Workplane("YZ")
-            .transformed(offset=(-self.outer_diameter, 0.0, 0.0))
+            .transformed(offset=(-self.outer_radius, 0.0, 0.0))
             # outer and inner races combined (cut later)
-            .rect(self.outer_diameter-self.inner_diameter, self.width, centered=False)
-            .revolve(axisStart=(self.outer_diameter, 0.0, 0.0),
-                     axisEnd=  (self.outer_diameter, 1.0, 0.0))
+            .rect(self.outer_radius-self.inner_radius, self.width, centered=False)
+            .revolve(axisStart=(self.outer_radius, 0.0, 0.0),
+                     axisEnd=  (self.outer_radius, 1.0, 0.0))
             # move to the center of rollers
-            .center(self.outer_diameter-self.pitch_diameter,
+            .center(self.outer_radius-self.pitch_radius,
                     self.width/2.0)
             # cut bearing surfaces
             .polyline([(-((self.roller_diameter+self.roller_fit)*sqrt(2.0))/2.0, 0.0),
@@ -87,8 +89,8 @@ class SlewBearing:
                        (((self.roller_diameter+self.roller_fit)*sqrt(2.0))/2.0, 0.0),
                        (0.0, -((self.roller_diameter+self.roller_fit)*sqrt(2.0))/2.0)
                        ]).close()
-            .revolve(axisStart=(self.pitch_diameter, 0.0, 0.0),
-                     axisEnd=  (self.pitch_diameter, 1.0, 0.0),
+            .revolve(axisStart=(self.pitch_radius, 0.0, 0.0),
+                     axisEnd=  (self.pitch_radius, 1.0, 0.0),
                      combine='cut')
         )
         return races
@@ -131,7 +133,7 @@ class SlewBearing:
                         axisEndPoint=(1.0, 0.0, 0.0),
                         angleDegrees=roller_rotate_deg)
                 # move to base position
-                .translate(vec=(0.0, -self.pitch_diameter, self.width/2.0))
+                .translate(vec=(0.0, -self.pitch_radius, self.width/2.0))
                 # rotate to final position
                 .rotate(axisStartPoint=(0.0, 0.0, 0.0),
                         axisEndPoint=(0.0, 0.0, 1.0),
@@ -145,32 +147,32 @@ class SlewBearing:
 # Create an instance of the SlewBearing
 # based on https://www.ldb-bearing.com/slewing-bearings/cross-roller-bearing
 my_bearing = SlewBearing(
-    inner_diameter=234,
     outer_diameter=403.5,
+    inner_diameter=234,
     width=45,
 #    roller_diameter=38.9,
     roller_fit=1.1,
     roller_slide=1.5,
-    num_rollers=52
+    num_rollers=24
 )
 
 my_bearing.assy.toCompound().exportStl("models/bearing_test.stl")
 
-ID = 25.0
 OD = 50.0
+ID = 15.0
 W  = 10.0
 RF = 0.3
 RS = 0.9
 NR = 2
 while True:
     try:
-        SlewBearing(ID, OD, W, RF, RS, NR)
+        SlewBearing(OD, ID, W, RF, RS, NR)
         break
     except ValueError:
         NR += 2
 while True:
     try:
-        SlewBearing(ID, OD, W, RF, RS, NR).assy.toCompound().exportStl("models/b" + str(OD) + "x" + str(ID) + "x" + str(W) + "_" + str(RF) + "x" + str(RS) + "_" + str(NR) + ".stl")
+        SlewBearing(OD, ID, W, RF, RS, NR).assy.toCompound().exportStl("models/b" + str(OD) + "x" + str(ID) + "x" + str(W) + "_" + str(RF) + "x" + str(RS) + "_" + str(NR) + ".stl")
         NR += 2
     except ValueError:
         break
