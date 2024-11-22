@@ -35,6 +35,8 @@ class SlewBearing:
         inner_race_min_thickness = line_thickness * 3 # minimal number of walls for the inner race
         outer_race_min_thickness = line_thickness * 3 # minimal number of walls for the outer race
         roller_chamfer_min_length = line_thickness * 3 # minimal number of lines touching the print bed
+        outer_race_chamfer = line_thickness * 1 # chamfer to put on the outside of the races
+        inner_race_chamfer = line_height * 1 # not really a chamfer but how deep to break an edge on the inside of the races
         outer_radius = outer_diameter/2.0 # it's more natural to provide ID and OD than using radii
         inner_radius = inner_diameter/2.0
 
@@ -76,8 +78,8 @@ class SlewBearing:
         self.outer_radius = outer_radius # OD/2.0 of the bearing
         self.pitch_radius = pitch_radius # radius of the circle that that the rollers follow during rotation of a bearing
         self.width = width # bearing width
-        self.race_chamfer = line_thickness * 1 # chamfer for all but at 1/2 width edges
-        # well, maybe also add a minute chamfer at 1/2 width?
+        self.outer_race_chamfer = outer_race_chamfer # chamfer to put on the outside of the races
+        self.inner_race_chamfer = inner_race_chamfer # # not really a chamfer but how deep to break an edge on the inside of the races
 
         ## Rollers
         self.roller_theta = roller_theta_deg # an angle from the middle of the roller to it's tangent neighbour
@@ -116,13 +118,13 @@ class SlewBearing:
                      combine='cut')
             # add a chamfer on OD and ID
             .faces(cq.NearestToPointSelector((0,0,self.width/2.0)))
-            .chamfer(self.race_chamfer)
+            .chamfer(self.outer_race_chamfer)
             .faces(cq.NearestToPointSelector((0,self.outer_radius,self.width/2.0)))
-            .chamfer(self.race_chamfer)
+            .chamfer(self.outer_race_chamfer)
             # break the edge between races
             .center(0.0,
                     0.0)
-            .rect(((self.roller_fit+self.roller_slide)*sqrt(2.0)/2.0+self.roller_chamfer_length)+self.race_chamfer*2.0, self.width, centered=True)
+            .rect(((self.roller_fit+self.roller_slide)*sqrt(2.0)/2.0+self.roller_chamfer_length)+self.inner_race_chamfer*2.0, self.width, centered=True)
             .revolve(axisStart=(self.pitch_radius, 0.0, 0.0),
                      axisEnd=  (self.pitch_radius, 1.0, 0.0),
                      combine='cut')
