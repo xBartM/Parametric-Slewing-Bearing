@@ -1,3 +1,4 @@
+import argparse
 import cadquery as cq
 from math import sqrt, tan, pi
 
@@ -188,33 +189,44 @@ class SlewBearing:
 
 # Create an instance of the SlewBearing
 # based on https://www.ldb-bearing.com/slewing-bearings/cross-roller-bearing
-sample_bearing = SlewBearing(
-    outer_diameter=403.5,
-    inner_diameter=234,
-    width=45,
-#    roller_diameter=38.9,
-    roller_fit=1.1,
-    roller_slide=1.5,
-    num_rollers=24
-)
+#sample_bearing = SlewBearing(
+#    outer_diameter=403.5,
+#    inner_diameter=234,
+#    width=45,
+#    roller_fit=1.1,
+#    roller_slide=1.5,
+#    num_rollers=24
+#)
 
-show_object(sample_bearing.races)
-
-sample_bearing.assy.toCompound().exportStl("models/bearing_test.stl")
+#show_object(sample_bearing.races)
+#sample_bearing.assy.toCompound().exportStl("models/bearing_test.stl")
 
 OD = 200.0
 #OD = 50.0
 ID = 150.0
 #ID = 15.0
-W  = 20.0
+W  = 15.0
 #W  = 10.0
 RF = 0.3
 RS = 0.9
 NR = 2
 
-while True:
+parser = argparse.ArgumentParser()
+parser.add_argument("OD", type=float, nargs='?', default=OD,
+                    help="outer diameter of the bearing")
+parser.add_argument("ID", type=float, nargs='?', default=ID,
+                    help="inner diameter of the bearing")
+parser.add_argument("W", type=float, nargs='?', default=W,
+                    help="width of the bearing")
+parser.add_argument("RF", type=float, nargs='?', default=RF,
+                    help="roller fit - rolling side dist between the rollers and dist to races")
+parser.add_argument("RS", type=float, nargs='?', default=RS,
+                    help="roller slide - roller base side dist to races")
+args = parser.parse_args()
+
+while NR <10000: # someday I'll come up with a better stop check
     try:
-        SlewBearing(OD, ID, W, RF, RS, NR).exportAssyStl("models/")
+        SlewBearing(args.OD, args.ID, args.W, args.RF, args.RS, NR).exportAssyStl("models/")
     except SlewBearing.RollerChamferValueError as e:
         print("num_rollers=" + str(NR) + ": " + str(e))
         break
@@ -224,4 +236,4 @@ while True:
         NR += 2
 
 # Display the bearing
-show_object(sample_bearing.assy)
+#show_object(sample_bearing.assy)
