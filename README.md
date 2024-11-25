@@ -13,9 +13,9 @@
 
 This repository contains a Python script for generating a print-in-place crossed roller slewing bearing with any coherent dimensions using the [CadQuery](https://github.com/CadQuery/cadquery?tab=readme-ov-file#getting-started) module. It's been inspired by [this model](https://www.thingiverse.com/thing:2375124) but designed to require no assembly and with an easy option to iterate over variables. Use cases include "high" loads in any direction with low rotational speeds. Tolerances are adjustable, as they depend on the printing technology and material used.
 
-| <img src="./media/working_bearing.gif" /> | 
+| <img src="./media/section_view.png" /> | 
 |:--:| 
-| *A working 200x150x15 bearing with 44 rollers* |
+| *Section view of 403.5x234x45 bearing with 24 rollers* |
 
 ## Glossary of Terms
 
@@ -62,6 +62,10 @@ This table is also accessible via the `-h` argument.
 The command will search for all bearings of specified dimensions with different numbers of rollers. If it exports 0 models, read the printed message carefully. If it exports only one model, you're all set and don't need to choose the version. Usually, the command will export a couple of models that differ by the number of rollers; more about this can be found in the [Testing](#testing) section. 
 
 ## Printing
+
+| <img src="./media/working_bearing.gif" /> | 
+|:--:| 
+| *A working 200x150x15 bearing with 44 rollers* |
 
 This section applies to existing and custom models:
 * The printer should be capable of printing perfect circles; otherwise, the bearing may bind before reaching optimal tolerances,
