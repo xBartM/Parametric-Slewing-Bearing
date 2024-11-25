@@ -31,15 +31,17 @@ This repository contains a Python script for generating a print-in-place crossed
 
 ## File Naming Convention
 
-The model files are named the following format:  
-`b{OD}x{ID}x{Width}_{Rollers Gap}x{Rollers Slide}_{Number of rollers}.stl`  
+The model files are named the following format:
+```
+b{OD}x{ID}x{Width}_{Rollers Gap}x{Rollers Slide}_{Number of rollers}.stl
+```
 The name carries information about the variables that you will be changing most frequently, as they have the most significant effect on the bearing's performance.
 
 ## Running the Script
 
 If you don't want to generate your own bearings yet, go to the [Printing](#printing) section.
 
-Having [CadQuery](https://github.com/CadQuery/cadquery?tab=readme-ov-file#getting-started) installed is a must. Depending on your installation, you might need to activate virtual environment first.
+Having [CadQuery](https://github.com/CadQuery/cadquery?tab=readme-ov-file#getting-started) installed is **a must**. Depending on your installation, you might need to activate virtual environment first.
 
 Clone this repository:
 ```
@@ -48,7 +50,9 @@ git clone https://github.com/xBartM/Parametric-Slewing-Bearing.git
 cd ./Parametric-Slewing-Bearing
 ```
 To execute the script, simply run:
-`python3 printinplaceslewbearing.py OD ID W RF RS`
+```
+python3 printinplaceslewbearing.py OD ID W RF RS
+```
 Where:
 | Argument  | Description | Suggested Starting Values |
 |:----------|:------------|:--------------------------|
@@ -57,6 +61,7 @@ Where:
 | `W` | `width` of the bearing | `10.0` |
 | `RF` | `roller fit` - rolling side dist between the rollers and dist to races | `0.3` |
 | `RS` | `roller slide` - roller base side dist to races | `0.9` |
+
 This table is also accessible via the `-h` argument.
 
 The command will search for all bearings of specified dimensions with different numbers of rollers. If it exports 0 models, read the printed message carefully. If it exports only one model, you're all set and don't need to choose the version. Usually, the command will export a couple of models that differ by the number of rollers; more about this can be found in the [Testing](#testing) section. 
@@ -100,13 +105,16 @@ In the `models/` folder, I've included `.stl` files for models I have printed (i
 
 ## Project Info
 
-The project is usable in itscurrent form though not complete. I'll explain some of the work below so you can modify it at will.
+The project is usable in its current form though not complete. I'll explain some of the work below so you can modify it at will.
 
 ### Design
 
-In the `media/` folder, there are pictures of my notes. I used them to arrive at mathematical equations that ultimately led me to creating a usable design. I referenced [this video](https://www.youtube.com/watch?v=5o4Fj8OxkB8) to help me visualise the geometry.  
-First, I created the races. They are represented as a rectangle revolved around an offset vertical axis which is then cut by a square rotated 45 degrees. Next, I added chamfers on both outer and inner edges of the bearing. Last I removed some material from edges of races that are the closest to rollers.  
-Then, the roller is created by rotating a polygon from a set of points.  
+In the `media/` folder, there are pictures of my notes. I used them to arrive at mathematical equations that ultimately led me to creating a usable design. I referenced [this video](https://www.youtube.com/watch?v=5o4Fj8OxkB8) to help me visualise the geometry.
+
+First, I created the races. They are represented as a rectangle revolved around an offset vertical axis which is then cut by a square rotated 45 degrees. Next, I added chamfers on both outer and inner edges of the bearing. Last I removed some material from edges of races that are the closest to rollers.
+
+Then, the roller is created by rotating a polygon from a set of points.
+
 To obtain a complete assembly, each roller is rotated and translated into its final position and duplicated to pack as many of them as possible. Keeping the space between the rollers to a minimum is important to ensure as little wobble as possible. Same thing applies to the space between the roller and the raceway. Keep in mind that this will constrain the movement of the bearing.
 
 If you want to delve deeper, take a look at the [Advanced](#advanced) section.
@@ -122,7 +130,8 @@ Depending on your printing technology (e.g., FDM), printer and material (ex. PLA
 
 ### Operation and Problems
 
-Operation is not as smooth as you'd expect from a bearing, but in principle it's supposed to be used in scenarios of high load and low speed. I've yet to test it's operation under load, but after some preliminary, primitive testing it shows some promise.  
+Operation is not as smooth as you'd expect from a bearing, but in principle it's supposed to be used in scenarios of high load and low speed. I've yet to test it's operation under load, but after some preliminary, primitive testing it shows some promise.
+
 In order to make it possible to print this bearing in place, so it doesn't require assembly, I had to make some suboptimal design decisions. One of them is that the rollers need to touch the build plate. This naturally strips us of an option to add dust covers (at least on one side). This means that debis and moisture can easily reach raceways and make them wear down faster (on the other hand it's a 3d printed bearing, what service life can we even expect?).
 
 ### Advanced 
@@ -140,6 +149,5 @@ Possible expansion points:
 
 ## Endnotes
 
-The project is usable and will be expanded further if it turns out to be a valid solution to the problem of handling high loads at low rotational speeds using 3d printed bearings.  
-
+The project is usable and will be expanded further if it turns out to be a valid solution to the problem of handling high loads at low rotational speeds using 3d printed bearings.
 
