@@ -94,7 +94,7 @@ class SlewBearing:
         ## model parts
         self.races = self.makeRaces()
         self.roller = self.makeRoller()
-        self.assy = self.makeBearingAssembly()
+        self.assy = self.makeAssembly()
 
 
     def makeRaces(self):
@@ -148,7 +148,7 @@ class SlewBearing:
         )
         return roller
     
-    def makeBearingAssembly(self):
+    def makeAssembly(self):
         assy = cq.Assembly()
         assy.add(
             self.races,
@@ -180,6 +180,40 @@ class SlewBearing:
                 )
         return assy
     
+    def makeSectionView(self):
+        # tis but a quik scribble
+        races_bak = self.races
+        self.races = (
+            self.races
+            .center(self.pitch_radius, 0.0)
+            .rect(-self.outer_diameter/2.0, 
+                  -self.width/2.0,
+                  centered=False)
+            .revolve(angleDegrees=90.0,
+                     axisStart=(0.0, 0.0, 0.0),
+                     axisEnd=  (0.0, 1.0, 0.0),
+                     combine='cut')
+            .center(0.0, 0.0)
+            .rect(-self.outer_diameter/2.0, 
+                  self.width/2.0,
+                  centered=False)
+            .revolve(angleDegrees=180.0,
+                     axisStart=(0.0, 0.0, 0.0),
+                     axisEnd=  (0.0, 1.0, 0.0),
+                     combine='cut')
+            .center(0.0, 0.0)
+            .rect(self.pitch_radius, 
+                  self.width/2.0,
+                  centered=False)
+            .revolve(angleDegrees=90.0,
+                     axisStart=(0.0, 0.0, 0.0),
+                     axisEnd=  (0.0, 1.0, 0.0),
+                     combine='cut')
+            )
+        section_assy = self.makeAssembly()
+        self.races = races_bak
+        return section_assy
+    
     def exportAssyStl(self, folder):
         self.assy.toCompound().exportStl(folder 
                                          + "b" + str(self.outer_diameter) + "x" + str(self.inner_diameter) + "x" + str(self.width) 
@@ -198,7 +232,8 @@ class SlewBearing:
 #    num_rollers=24
 #)
 
-#show_object(sample_bearing.races)
+#show_object(sample_bearing.makeSectionView())
+#show_object(sample_bearing.assy)
 #sample_bearing.assy.toCompound().exportStl("models/bearing_test.stl")
 
 OD = 200.0
